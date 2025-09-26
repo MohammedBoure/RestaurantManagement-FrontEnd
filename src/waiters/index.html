@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>واجهة النادل - المطعم</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="../admin/js/config.js"></script>
+    <script src="js/waiter.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        }
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        }
+        .status-available {
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            color: #166534;
+            border-left: 4px solid #22c55e;
+        }
+        .status-occupied {
+            background: linear-gradient(135deg, #fef2f2, #fee2e2);
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+        .status-reserved {
+            background: linear-gradient(135deg, #fffbeb, #fef3c7);
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+        .modal {
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(12px);
+        }
+        .toast {
+            animation: slideIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%) scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 25px rgba(30, 41, 59, 0.25);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #166534, #15803d);
+            border: 1px solid transparent;
+        }
+        .btn-success:hover {
+            background: linear-gradient(135deg, #14532d, #166534);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 25px rgba(22, 101, 52, 0.25);
+        }
+        .quantity-input {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .quantity-input:focus {
+            border-color: #475569;
+            box-shadow: 0 0 0 3px rgba(71, 85, 105, 0.1);
+        }
+        .quantity-btn {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #475569;
+        }
+        .quantity-btn:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: scale(1.05);
+        }
+        .quantity-btn:active {
+            transform: scale(0.95);
+        }
+        .product-image {
+            border-radius: 12px;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .product-image:hover {
+            transform: scale(1.02);
+        }
+        .floating-cart {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 40;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+            padding: 16px;
+        }
+        .tab-button {
+            position: relative;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: #64748b;
+        }
+        .tab-button.active {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: white;
+            box-shadow: 0 8px 20px rgba(30, 41, 59, 0.3);
+        }
+        .tab-button:hover:not(.active) {
+            background: #f1f5f9;
+            color: #334155;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .order-summary {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+            border-left: 4px solid #475569;
+        }
+        .navbar-brand {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: white;
+            border-radius: 12px;
+            padding: 8px 12px;
+            font-weight: 700;
+        }
+        .action-btn {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            color: #475569;
+            transition: all 0.2s ease;
+        }
+        .action-btn:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+        .status-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .ready-badge {
+            background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+            color: #166534;
+        }
+        .pending-badge {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            color: #92400e;
+        }
+        .preparing-badge {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1e40af;
+        }
+        .table-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+            margin-bottom: 0.75rem;
+        }
+        @media (max-width: 640px) {
+            .floating-cart {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+            }
+            .modal > div {
+                margin: 20px 10px;
+                max-height: calc(100vh - 40px);
+            }
+            .toast {
+                top: 8rem;
+            }
+        }
+    </style>
+</head>
+<body x-data="app" x-init="init()">
+    <!-- Navbar -->
+    <nav class="glass-effect text-gray-800 p-4 fixed w-full top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="navbar-brand">
+                    <span class="text-xl">🍽️</span>
+                </div>
+                <h1 class="text-xl font-bold text-gray-700">واجهة النادل</h1>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span id="waiter-id" class="text-sm bg-gray-100 px-3 py-1 rounded-full font-medium text-gray-600"></span>
+                <button @click="goToSettings()" class="action-btn px-3 py-2 rounded-full flex items-center">
+                    <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </button>
+                <button @click="goToHome()" class="action-btn px-3 py-2 rounded-full flex items-center">
+                    <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+    <!-- الواجهة الرئيسية -->
+    <div class="pt-20 container mx-auto p-4 pb-32">
+        <!-- تبويبات -->
+        <div class="flex justify-center mb-8">
+            <div class="glass-effect p-2 rounded-2xl inline-flex space-x-2">
+                <button @click="tab = 'tables'" :class="{ 'active': tab === 'tables' }" class="tab-button relative">
+                    <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    الطاولات
+                </button>
+                <button @click="tab = 'notifications'; fetchReadyOrders()" :class="{ 'active': tab === 'notifications' }" class="tab-button relative">
+                    <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+                    </svg>
+                    الإشعارات
+                    <span x-show="readyOrders.length > 0" x-text="readyOrders.length" class="notification-badge"></span>
+                </button>
+            </div>
+        </div>
+        <!-- إشعار (Toast) -->
+        <div x-show="notification" class="fixed top-32 right-4 left-4 md:left-auto md:w-96 z-40" x-transition>
+            <div class="glass-effect border-l-4 border-amber-500 text-gray-800 p-4 rounded-2xl shadow-lg toast">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-amber-600 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p x-text="notification" class="font-medium"></p>
+                    </div>
+                    <button @click="notification = ''" class="text-gray-500 hover:text-gray-700 p-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- صفحة الطاولات -->
+        <div x-show="tab === 'tables'">
+            <h2 class="text-3xl font-bold mb-8 text-center text-gray-700">إدارة الطاولات</h2>
+            <!-- فلترة الطاولات -->
+            <div class="glass-effect p-6 rounded-2xl mb-8">
+                <label class="block text-gray-700 font-semibold mb-4">تصفية الطاولات:</label>
+                <select x-model="tableFilter" @change="filterTables()" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-gray-400 focus:outline-none transition-colors bg-white">
+                    <option value="all">جميع الطاولات</option>
+                    <option value="available">الطاولات المتاحة</option>
+                    <option value="occupied">الطاولات المحجوزة</option>
+                    <option value="reserved">الطاولات المحجوزة مسبقًا</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <template x-for="table in filteredTables" :key="table.id">
+                    <div :class="`glass-effect p-6 rounded-2xl shadow-lg cursor-pointer card-hover ${getStatusClass(table.status)}`">
+                        <div class="text-center">
+                            <div class="table-icon">🪑</div>
+                            <h3 class="text-xl font-bold mb-2">طاولة <span x-text="table.table_number"></span></h3>
+                            <p class="text-sm font-medium mb-6 flex items-center justify-center">
+                                <span class="w-2 h-2 rounded-full bg-current ml-2"></span>
+                                <span x-text="translateStatus(table.status)"></span>
+                            </p>
+                        </div>
+                        <div class="space-y-3">
+                            <button x-show="table.status === 'available'" class="w-full btn-primary text-white px-4 py-3 rounded-xl font-semibold" @click="startOrder(table.id)">
+                                <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                بدء طلب جديد
+                            </button>
+                            <button x-show="table.status !== 'available'" class="w-full bg-slate-600 hover:bg-slate-700 text-white px-4 py-3 rounded-xl font-semibold transition-colors" @click="selectedTable = table; fetchOrders(table.id)">
+                                <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                عرض عناصر الطلب
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <!-- Modal لتفاصيل الطاولة -->
+            <template x-if="selectedTable">
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal p-4">
+                    <div class="glass-effect rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <div class="p-6">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-2xl font-bold text-gray-800">تفاصيل طاولة <span x-text="selectedTable.table_number"></span></h2>
+                                <button @click="selectedTable = null" class="text-gray-500 hover:text-gray-700 p-2">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div x-show="loading" class="text-center py-8">
+                                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-slate-600"></div>
+                                <p class="mt-2 text-gray-600">جاري التحميل...</p>
+                            </div>
+                            <template x-if="!loading">
+                                <div>
+                                    <template x-if="filteredOrders.length === 0">
+                                        <div class="text-center py-12">
+                                            <div class="text-6xl mb-4">📝</div>
+                                            <p class="text-gray-500 text-lg">لا توجد طلبات غير مكتملة.</p>
+                                        </div>
+                                    </template>
+                                    <div class="space-y-4">
+                                        <template x-for="order in filteredOrders" :key="order.id">
+                                            <div class="order-summary">
+                                                <div class="flex justify-between items-start mb-3">
+                                                    <div>
+                                                        <p class="font-bold text-lg">طلب <span x-text="order.id"></span></p>
+                                                        <p class="text-sm text-gray-600"><span x-text="new Date(order.created_at).toLocaleString('en-US')"></span></p>
+                                                    </div>
+                                                    <div class="text-left flex items-center space-x-2">
+                                                        <span :class="getOrderStatusClass(order.status)" class="status-badge" x-text="translateStatus(order.status)"></span>
+                                                    </div>
+                                                </div>
+                                                <div class="space-y-2">
+                                                    <template x-if="order.items && order.items.length">
+                                                        <div class="mt-3">
+                                                            <p class="font-semibold mb-2">العناصر:</p>
+                                                            <div class="space-y-2">
+                                                                <template x-for="item in order.items" :key="item.id">
+                                                                    <div class="bg-white bg-opacity-50 p-3 rounded-lg">
+                                                                        <div class="flex justify-between items-center">
+                                                                            <span class="font-medium" x-text="item.menu_item_name"></span>
+                                                                            <span class="bg-slate-100 text-slate-800 px-2 py-1 rounded-full text-sm">×<span x-text="item.quantity"></span></span>
+                                                                        </div>
+                                                                        <p x-show="item.note" class="text-sm text-gray-600 mt-1">ملاحظات: <span x-text="item.note"></span></p>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="!order.items || !order.items.length">
+                                                        <p class="text-gray-500 text-center py-4">لا توجد عناصر.</p>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                            <div class="mt-6 text-center">
+                                <button @click="selectedTable = null" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors">
+                                    إغلاق
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+        <!-- صفحة الإشعارات -->
+        <div x-show="tab === 'notifications'">
+            <h2 class="text-3xl font-bold mb-8 text-center text-gray-700">الطلبات الجاهزة</h2>
+            <div class="space-y-6">
+                <template x-for="(order, index) in readyOrders" :key="order.id">
+                    <div class="glass-effect p-6 rounded-2xl shadow-lg card-hover border-l-4 border-green-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800">طلب <span x-text="order.id"></span></h3>
+                                <p class="text-gray-600">طاولة <span x-text="order.table_id"></span></p>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-3xl mb-2">🍽️</div>
+                                <span class="ready-badge">جاهز</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4">
+                            <svg class="w-4 h-4 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span x-text="new Date(order.created_at).toLocaleString('en-US')"></span>
+                        </p>
+                        <button @click="deliverOrder(order.id, index)" class="w-full btn-success text-white px-4 py-3 rounded-xl font-semibold">
+                            <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            تم التسليم
+                        </button>
+                    </div>
+                </template>
+                <template x-if="!readyOrders.length">
+                    <div class="text-center py-12">
+                        <div class="text-6xl mb-4">🔔</div>
+                        <p class="text-gray-600 text-xl">لا توجد طلبات جاهزة حاليًا.</p>
+                    </div>
+                </template>
+            </div>
+        </div>
+        <!-- صفحة إنشاء الطلب -->
+        <div x-show="tab === 'order'">
+            <h2 class="text-3xl font-bold mb-8 text-center text-gray-700">طلب جديد للطاولة <span x-text="currentTableNumber"></span></h2>
+            <!-- اختيار الفئة -->
+            <div class="glass-effect p-6 rounded-2xl mb-8">
+                <label class="block text-gray-700 font-semibold mb-4">اختر الفئة:</label>
+                <select x-model="selectedCategory" @change="fetchMenuItems()" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-gray-400 focus:outline-none transition-colors bg-white">
+                    <option value="">جميع الفئات</option>
+                    <template x-for="cat in categories" :key="cat.id">
+                        <option :value="cat.id" x-text="cat.name"></option>
+                    </template>
+                </select>
+            </div>
+            <!-- قائمة الوجبات -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <template x-for="item in menuItems" :key="item.id">
+                    <div class="glass-effect rounded-2xl overflow-hidden shadow-lg card-hover">
+                        <!-- صورة المنتج -->
+                        <div class="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200">
+                            <template x-if="item.image_url">
+                                <img :src="`${API_BASE}/${item.image_url}`" :alt="item.name" class="w-full h-full product-image object-cover">
+                            </template>
+                            <template x-if="!item.image_url">
+                                <div class="w-full h-full flex items-center justify-center">
+                                    <span class="text-6xl opacity-60">🍽️</span>
+                                </div>
+                            </template>
+                            <div class="absolute top-3 right-3 bg-white bg-opacity-95 backdrop-blur-sm px-3 py-2 rounded-full shadow-lg">
+                                <span class="font-bold text-gray-700" x-text="item.price + 'دينار'"></span>
+                            </div>
+                        </div>
+                        <!-- معلومات المنتج -->
+                        <div class="p-5">
+                            <h3 class="font-bold text-lg text-gray-800 mb-2" x-text="item.name"></h3>
+                            <p class="text-sm text-gray-600 mb-4 line-clamp-2" x-text="item.description"></p>
+                            <!-- اختيار الكمية -->
+                            <div class="flex items-center justify-between mb-4">
+                                <span class="font-medium text-gray-700">الكمية:</span>
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" class="quantity-btn" @click="decreaseQuantity(item.id)">−</button>
+                                    <input type="number" min="1" max="99" :id="'qty-' + item.id" value="1" class="quantity-input w-16 h-10 text-center border-0 focus:outline-none">
+                                    <button type="button" class="quantity-btn" @click="increaseQuantity(item.id)">+</button>
+                                </div>
+                            </div>
+                            <!-- ملاحظات -->
+                            <div class="mb-4">
+                                <input type="text" :id="'note-' + item.id" placeholder="ملاحظات خاصة..." class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-gray-400 focus:outline-none transition-colors text-sm bg-white">
+                            </div>
+                            <!-- زر الإضافة -->
+                            <button @click="addToCart(item)" class="w-full btn-success text-white px-4 py-3 rounded-xl font-semibold">
+                                <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h9m-9 0h9m-9 0a2 2 0 002 2m-7-2a2 2 0 002 2"></path>
+                                </svg>
+                                إضافة إلى السلة
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+            <!-- زر العودة -->
+            <div class="text-center mb-6">
+                <button @click="tab = 'tables'; selectedTable = null; cart = []" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold transition-colors">
+                    <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path>
+                    </svg>
+                    العودة للطاولات
+                </button>
+            </div>
+        </div>
+        <!-- السلة العائمة -->
+        <div x-show="tab === 'order' && cart.length > 0" class="floating-cart">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5 6m0 0h9m-9 0h9m-9 0a2 2 0 002 2m-7-2a2 2 0 002 2"></path>
+                    </svg>
+                    السلة (<span x-text="cart.length"></span>)
+                </h3>
+                <span class="font-bold text-gray-700 text-lg" x-text="cartTotal + 'دينار'"></span>
+            </div>
+            <div class="max-h-32 overflow-y-auto mb-4 space-y-2">
+                <template x-for="(cartItem, index) in cart" :key="index">
+                    <div class="flex justify-between items-center bg-white bg-opacity-80 p-3 rounded-lg shadow-sm">
+                        <div class="flex-1">
+                            <p class="font-medium text-sm text-gray-800" x-text="cartItem.name"></p>
+                            <p class="text-xs text-gray-600">
+                                <span x-text="'×' + cartItem.quantity"></span>
+                                <span x-show="cartItem.note" x-text="' - ' + cartItem.note"></span>
+                            </p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-medium text-sm text-gray-700" x-text="(cartItem.price * cartItem.quantity) + 'ع'"></span>
+                            <button @click="removeFromCart(index)" class="text-red-500 hover:text-red-700 p-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+                <button @click="submitOrder()" class="w-full btn-primary text-white px-4 py-3 rounded-xl font-semibold" :disabled="!cart.length">
+                    <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                    إرسال الطلب
+                </button>
+            </div>
+        </div>
+    </body>
+</html>

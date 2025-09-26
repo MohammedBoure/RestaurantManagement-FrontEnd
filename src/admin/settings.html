@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الإعدادات</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+        <h3>واجهة الإدارة</h3>
+        <a href="categories.html" aria-label="إدارة الفئات">إدارة الفئات</a>
+        <a href="menu_items.html" aria-label="إدارة العناصر">إدارة العناصر</a>
+        <a href="tables.html" aria-label="إدارة الطاولات">إدارة الطاولات</a>
+        <a href="waiters.html" aria-label="إدارة النادلين">إدارة النادلين</a>
+        <a href="orders.html" aria-label="إدارة الطلبات">إدارة الطلبات</a>
+        <a href="payments.html" aria-label="إدارة المدفوعات">إدارة المدفوعات</a>
+        <a href="settings.html" class="active" aria-label="الإعدادات">الإعدادات</a>
+        <a href="/payment.html" class="mt-4" aria-label="تسجيل الخروج">واجهة مستقبل الدفعات</a>
+        <a href="/index.html" aria-label="تسجيل الخروج">واجهة الطباخ</a>
+        <a href="/waiters/index.html" aria-label="تسجيل الخروج">واجهة النادل</a>
+    </div>
+    <div class="content">
+        <div class="container">
+            <h1 id="section-title">الإعدادات</h1>
+            <div class="loading-spinner" id="loading-spinner"></div>
+            <div id="section-content">
+                <!-- Password Management Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="h5 mb-0">إدارة كلمات المرور</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h5 class="card-title">الأدمن</h5>
+                                        <p class="card-text">كلمة المرور الحالية: <span id="admin-password">جاري التحميل...</span></p>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#resourceModal" onclick="preparePasswordForm('admin')">تغيير كلمة المرور</button>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="deletePassword('admin')">حذف كلمة المرور</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h5 class="card-title">الطباخ</h5>
+                                        <p class="card-text">كلمة المرور الحالية: <span id="chef-password">جاري التحميل...</span></p>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#resourceModal" onclick="preparePasswordForm('chef')">تغيير كلمة المرور</button>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="deletePassword('chef')">حذف كلمة المرور</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h5 class="card-title">مستقبل الدفعات</h5>
+                                        <p class="card-text">كلمة المرور الحالية: <span id="cashier-password">جاري التحميل...</span></p>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#resourceModal" onclick="preparePasswordForm('cashier')">تغيير كلمة المرور</button>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="deletePassword('cashier')">حذف كلمة المرور</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h5 class="card-title">النادل</h5>
+                                        <p class="card-text">كلمة المرور الحالية: <span id="waiter-password">جاري التحميل...</span></p>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#resourceModal" onclick="preparePasswordForm('waiter')">تغيير كلمة المرور</button>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="deletePassword('waiter')">حذف كلمة المرور</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="alert-container" class="alert alert-dismissible fade show d-none" role="alert">
+                <span id="alert-message"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="resourceModal" tabindex="-1" aria-labelledby="resourceModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resourceModalLabel">تغيير كلمة المرور</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="resourceForm">
+                        <input type="hidden" id="role" name="role">
+                        <div class="mb-3">
+                            <label for="new-password" class="form-label">كلمة المرور الجديدة</label>
+                            <input type="password" class="form-control" id="new-password" name="password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm-password" class="form-label">تأكيد كلمة المرور</label>
+                            <input type="password" class="form-control" id="confirm-password" name="confirm_password" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                    <button type="submit" form="resourceForm" class="btn btn-primary" onclick="updatePassword()">حفظ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/config.js"></script>
+    <script src="js/settings.js"></script>
+    <script>
+        window.onload = () => {
+            console.log('Page loaded, calling loadSettings()');
+            loadSettings();
+        };
+    </script>
+</body>
+</html>
